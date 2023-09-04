@@ -38,7 +38,7 @@
  * @property {boolean} withBackground - should image be rendered with background
  * @property {boolean} stretched - should image be stretched to full width of container
  * @property {object} file — Image file data returned from backend
- * @property {string} file.url — image URL
+ * @property {string} file.file_id — image file ID
  */
 
 import './index.css';
@@ -60,9 +60,10 @@ import { IconAddBorder, IconStretch, IconAddBackground, IconPicture } from '@cod
  * @property {object} additionalRequestData - any data to send with requests
  * @property {object} additionalRequestHeaders - allows to pass custom headers with Request
  * @property {string} buttonContent - overrides for Select File button
+ * @property {function(string): string} loader - method that load the image
  * @property {object} [uploader] - optional custom uploader
  * @property {function(File): Promise.<UploadResponseFormat>} [uploader.uploadByFile] - method that upload image by File
- * @property {function(string): Promise.<UploadResponseFormat>} [uploader.uploadByUrl] - method that upload image by URL
+ * @property {function(string): promise.<uploadresponseformat>} [uploader.uploadbyurl] - method that upload image by url
  */
 
 /**
@@ -109,19 +110,19 @@ export default class ImageTool {
         name: 'withBorder',
         icon: IconAddBorder,
         title: 'With border',
-        toggle: true,
+        toggle: false,
       },
       {
         name: 'stretched',
         icon: IconStretch,
         title: 'Stretch image',
-        toggle: true,
+        toggle: false,
       },
       {
         name: 'withBackground',
         icon: IconAddBackground,
         title: 'With background',
-        toggle: true,
+        toggle: false,
       },
     ];
   }
@@ -148,6 +149,7 @@ export default class ImageTool {
       types: config.types || 'image/*',
       captionPlaceholder: this.api.i18n.t(config.captionPlaceholder || 'Caption'),
       buttonContent: config.buttonContent || '',
+      loader: config.loader || ((fileId) => fileId),
       uploader: config.uploader || undefined,
       actions: config.actions || [],
     };
@@ -203,7 +205,7 @@ export default class ImageTool {
    * @public
    */
   validate(savedData) {
-    return savedData.file && savedData.file.url;
+    return savedData.file && savedData.file.file_id;
   }
 
   /**
@@ -380,8 +382,8 @@ export default class ImageTool {
   set image(file) {
     this._data.file = file || {};
 
-    if (file && file.url) {
-      this.ui.fillImage(file.url);
+    if (file && file.file_id) {
+      this.ui.fillImage(this.config.loader(file.file_id));
     }
   }
 

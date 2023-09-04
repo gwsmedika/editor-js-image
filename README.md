@@ -89,6 +89,7 @@ Image Tool supports these configuration parameters:
 
 | Field | Type     | Description        |
 | ----- | -------- | ------------------ |
+| loader | `function` | Function for load the image |
 | endpoints | `{byFile: string, byUrl: string}` | Endpoints for file uploading. <br> Contains 2 fields: <br> __byFile__ - for file uploading <br> __byUrl__ - for uploading by URL |
 | field | `string` | (default: `image`) Name of uploaded image field in POST request |
 | types | `string` | (default: `image/*`) Mime-types of files that can be [accepted with file selection](https://github.com/codex-team/ajax#accept-string).|
@@ -134,7 +135,7 @@ This Tool returns `data` with following format
 
 | Field          | Type      | Description                     |
 | -------------- | --------- | ------------------------------- |
-| file           | `object`  | Uploaded file data. Any data got from backend uploader. Always contain the `url` property |
+| file           | `object`  | Uploaded file data. Any data got from backend uploader. Always contain the `file_id` property |
 | caption        | `string`  | image's caption                 |
 | withBorder     | `boolean` | add border to image             |
 | withBackground | `boolean` | need to add background          |
@@ -146,7 +147,7 @@ This Tool returns `data` with following format
     "type" : "image",
     "data" : {
         "file": {
-            "url" : "https://www.tesla.com/tesla_theme/assets/img/_vehicle_redesign/roadster_and_semi/roadster/hero.jpg"
+            "file_id" : "a332ea4f-1820-4a68-8401-cc8b8d156362"
         },
         "caption" : "Roadster // tesla.com",
         "withBorder" : false,
@@ -185,7 +186,7 @@ The response of your uploader **should**  cover the following format:
 {
     "success" : 1,
     "file": {
-        "url" : "https://www.tesla.com/tesla_theme/assets/img/_vehicle_redesign/roadster_and_semi/roadster/hero.jpg",
+        "file_id" : "a332ea4f-1820-4a68-8401-cc8b8d156362",
         // ... and any additional fields you want to store, such as width, height, color, extension, etc
     }
 }
