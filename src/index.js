@@ -18,16 +18,6 @@
  *       $ node dev/server.js
  *
  * It will expose 8008 port, so you can pass http://localhost:8008 with the Tools config:
- *
- * image: {
- *   class: ImageTool,
- *   config: {
- *     endpoints: {
- *       byFile: 'http://localhost:8008/uploadFile',
- *       byUrl: 'http://localhost:8008/fetchUrl',
- *     }
- *   },
- * },
  */
 
 /**
@@ -46,14 +36,11 @@ import './index.css';
 import Ui from './ui';
 import Uploader from './uploader';
 
-import { IconAddBorder, IconStretch, IconAddBackground, IconPicture } from '@codexteam/icons';
+import { IconPicture } from '@codexteam/icons';
 
 /**
  * @typedef {object} ImageConfig
  * @description Config supported by Tool
- * @property {object} endpoints - upload endpoints
- * @property {string} endpoints.byFile - upload by file
- * @property {string} endpoints.byUrl - upload by URL
  * @property {string} field - field name for uploaded image
  * @property {string} types - available mime-types
  * @property {string} captionPlaceholder - placeholder for Caption field
@@ -61,9 +48,7 @@ import { IconAddBorder, IconStretch, IconAddBackground, IconPicture } from '@cod
  * @property {object} additionalRequestHeaders - allows to pass custom headers with Request
  * @property {string} buttonContent - overrides for Select File button
  * @property {function(string): string} loader - method that load the image
- * @property {object} [uploader] - optional custom uploader
- * @property {function(File): Promise.<UploadResponseFormat>} [uploader.uploadByFile] - method that upload image by File
- * @property {function(string): promise.<uploadresponseformat>} [uploader.uploadbyurl] - method that upload image by url
+ * @property {function(File): Promise.<UploadResponseFormat>} uploader - method that upload image by File
  */
 
 /**
@@ -71,9 +56,9 @@ import { IconAddBorder, IconStretch, IconAddBackground, IconPicture } from '@cod
  * @description This format expected from backend on file uploading
  * @property {number} success - 1 for successful uploading, 0 for failure
  * @property {object} file - Object with file data.
- *                           'url' is required,
+ *                           'file_id' is required,
  *                           also can contain any additional data that will be saved and passed back
- * @property {string} file.url - [Required] image source URL
+ * @property {string} file.file_id - [Required] image source ID
  */
 export default class ImageTool {
   /**
@@ -105,26 +90,7 @@ export default class ImageTool {
    * @returns {Array}
    */
   static get tunes() {
-    return [
-      {
-        name: 'withBorder',
-        icon: IconAddBorder,
-        title: 'With border',
-        toggle: false,
-      },
-      {
-        name: 'stretched',
-        icon: IconStretch,
-        title: 'Stretch image',
-        toggle: false,
-      },
-      {
-        name: 'withBackground',
-        icon: IconAddBackground,
-        title: 'With background',
-        toggle: false,
-      },
-    ];
+    return [];
   }
 
   /**
@@ -142,7 +108,6 @@ export default class ImageTool {
      * Tool's initial config
      */
     this.config = {
-      endpoints: config.endpoints || '',
       additionalRequestData: config.additionalRequestData || {},
       additionalRequestHeaders: config.additionalRequestHeaders || {},
       field: config.field || 'image',
@@ -224,36 +189,6 @@ export default class ImageTool {
   }
 
   /**
-   * Returns configuration for block tunes: add background, add border, stretch image
-   *
-   * @public
-   *
-   * @returns {Array}
-   */
-  renderSettings() {
-    // Merge default tunes with the ones that might be added by user
-    // @see https://github.com/editor-js/image/pull/49
-    const tunes = ImageTool.tunes.concat(this.config.actions);
-
-    return tunes.map(tune => ({
-      icon: tune.icon,
-      label: this.api.i18n.t(tune.title),
-      name: tune.name,
-      toggle: tune.toggle,
-      isActive: this.data[tune.name],
-      onActivate: () => {
-        /* If it'a user defined tune, execute it's callback stored in action property */
-        if (typeof tune.action === 'function') {
-          tune.action(tune.name);
-
-          return;
-        }
-        this.tuneToggled(tune.name);
-      },
-    }));
-  }
-
-  /**
    * Fires after clicks on the Toolbox Image Icon
    * Initiates click on the Select File button
    *
@@ -269,72 +204,9 @@ export default class ImageTool {
    * @see {@link https://github.com/codex-team/editor.js/blob/master/docs/tools.md#paste-handling}
    * @returns {{tags: string[], patterns: object<string, RegExp>, files: {extensions: string[], mimeTypes: string[]}}}
    */
-  static get pasteConfig() {
-    return {
-      /**
-       * Paste HTML into Editor
-       */
-      tags: [
-        {
-          img: { src: true },
-        },
-      ],
-      /**
-       * Paste URL of image into the Editor
-       */
-      patterns: {
-        image: /https?:\/\/\S+\.(gif|jpe?g|tiff|png|svg|webp)(\?[a-z0-9=]*)?$/i,
-      },
-
-      /**
-       * Drag n drop file from into the Editor
-       */
-      files: {
-        mimeTypes: [ 'image/*' ],
-      },
-    };
-  }
-
-  /**
-   * Specify paste handlers
-   *
-   * @public
-   * @see {@link https://github.com/codex-team/editor.js/blob/master/docs/tools.md#paste-handling}
-   * @param {CustomEvent} event - editor.js custom paste event
-   *                              {@link https://github.com/codex-team/editor.js/blob/master/types/tools/paste-events.d.ts}
-   * @returns {void}
-   */
-  async onPaste(event) {
-    switch (event.type) {
-      case 'tag': {
-        const image = event.detail.data;
-
-        /** Images from PDF */
-        if (/^blob:/.test(image.src)) {
-          const response = await fetch(image.src);
-          const file = await response.blob();
-
-          this.uploadFile(file);
-          break;
-        }
-
-        this.uploadUrl(image.src);
-        break;
-      }
-      case 'pattern': {
-        const url = event.detail.data;
-
-        this.uploadUrl(url);
-        break;
-      }
-      case 'file': {
-        const file = event.detail.file;
-
-        this.uploadFile(file);
-        break;
-      }
-    }
-  }
+  // static get pasteConfig() {
+  //   return {};
+  // }
 
   /**
    * Private methods
@@ -353,12 +225,6 @@ export default class ImageTool {
 
     this._data.caption = data.caption || '';
     this.ui.fillCaption(this._data.caption);
-
-    ImageTool.tunes.forEach(({ name: tune }) => {
-      const value = typeof data[tune] !== 'undefined' ? data[tune] === true || data[tune] === 'true' : false;
-
-      this.setTune(tune, value);
-    });
   }
 
   /**
@@ -414,74 +280,9 @@ export default class ImageTool {
     console.log('Image Tool: uploading failed because of', errorText);
 
     this.api.notifier.show({
-      message: this.api.i18n.t('Couldn’t upload image. Please try another.'),
+      message: this.api.i18n.t('Couldn"t upload image. Please try another.'),
       style: 'error',
     });
     this.ui.hidePreloader();
-  }
-
-  /**
-   * Callback fired when Block Tune is activated
-   *
-   * @private
-   *
-   * @param {string} tuneName - tune that has been clicked
-   * @returns {void}
-   */
-  tuneToggled(tuneName) {
-    // inverse tune state
-    this.setTune(tuneName, !this._data[tuneName]);
-  }
-
-  /**
-   * Set one tune
-   *
-   * @param {string} tuneName - {@link Tunes.tunes}
-   * @param {boolean} value - tune state
-   * @returns {void}
-   */
-  setTune(tuneName, value) {
-    this._data[tuneName] = value;
-
-    this.ui.applyTune(tuneName, value);
-
-    if (tuneName === 'stretched') {
-      /**
-       * Wait until the API is ready
-       */
-      Promise.resolve().then(() => {
-        const blockId = this.api.blocks.getCurrentBlockIndex();
-
-        this.api.blocks.stretchBlock(blockId, value);
-      })
-        .catch(err => {
-          console.error(err);
-        });
-    }
-  }
-
-  /**
-   * Show preloader and upload image file
-   *
-   * @param {File} file - file that is currently uploading (from paste)
-   * @returns {void}
-   */
-  uploadFile(file) {
-    this.uploader.uploadByFile(file, {
-      onPreview: (src) => {
-        this.ui.showPreloader(src);
-      },
-    });
-  }
-
-  /**
-   * Show preloader and upload image by target url
-   *
-   * @param {string} url - url pasted
-   * @returns {void}
-   */
-  uploadUrl(url) {
-    this.ui.showPreloader(url);
-    this.uploader.uploadByUrl(url);
   }
 }

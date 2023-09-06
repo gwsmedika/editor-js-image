@@ -43,70 +43,18 @@ export default class Uploader {
     let upload;
 
     // custom uploading
-    if (this.config.uploader && typeof this.config.uploader.uploadByFile === 'function') {
+    if (this.config.uploader) {
       upload = ajax.selectFiles({ accept: this.config.types }).then((files) => {
         preparePreview(files[0]);
 
-        const customUpload = this.config.uploader.uploadByFile(files[0]);
+        const customUpload = this.config.uploader(files[0]);
 
         if (!isPromise(customUpload)) {
-          console.warn('Custom uploader method uploadByFile should return a Promise');
+          console.warn('Custom uploader method should return a Promise');
         }
 
         return customUpload;
       });
-
-    // default uploading
-    } else {
-      upload = ajax.transport({
-        url: this.config.endpoints.byFile,
-        data: this.config.additionalRequestData,
-        accept: this.config.types,
-        headers: this.config.additionalRequestHeaders,
-        beforeSend: (files) => {
-          preparePreview(files[0]);
-        },
-        fieldName: this.config.field,
-      }).then((response) => response.body);
-    }
-
-    upload.then((response) => {
-      this.onUpload(response);
-    }).catch((error) => {
-      this.onError(error);
-    });
-  }
-
-  /**
-   * Handle clicks on the upload file button
-   * Fires ajax.post()
-   *
-   * @param {string} url - image source url
-   */
-  uploadByUrl(url) {
-    let upload;
-
-    /**
-     * Custom uploading
-     */
-    if (this.config.uploader && typeof this.config.uploader.uploadByUrl === 'function') {
-      upload = this.config.uploader.uploadByUrl(url);
-
-      if (!isPromise(upload)) {
-        console.warn('Custom uploader method uploadByUrl should return a Promise');
-      }
-    } else {
-      /**
-       * Default uploading
-       */
-      upload = ajax.post({
-        url: this.config.endpoints.byUrl,
-        data: Object.assign({
-          url: url,
-        }, this.config.additionalRequestData),
-        type: ajax.contentType.JSON,
-        headers: this.config.additionalRequestHeaders,
-      }).then(response => response.body);
     }
 
     upload.then((response) => {
@@ -176,4 +124,3 @@ export default class Uploader {
     });
   }
 }
-
