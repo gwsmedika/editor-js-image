@@ -1,6 +1,6 @@
 {
   "name": "@gwsmedika/editor-js-image",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "keywords": [
     "codex editor",
     "tool",
@@ -12,7 +12,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GWS-Medika/editor-js-image"
+    "url": "git+git@github.com:gwsmedika/editor-js-image.git"
   },
   "main": "./dist/bundle.js",
   "scripts": {
@@ -22,10 +22,7 @@
     "lint:errors": "eslint src/ --ext .js --quiet",
     "lint:fix": "eslint src/ --ext .js --fix"
   },
-  "author": {
-    "name": "CodeX",
-    "email": "team@ifmo.su"
-  },
+  "author": "CodeX <team@ifmo.su>",
   "devDependencies": {
     "@babel/core": "^7.3.4",
     "@babel/plugin-transform-runtime": "^7.2.0",
@@ -49,5 +46,9 @@
   },
   "dependencies": {
     "@codexteam/icons": "^0.0.6"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/gwsmedika/editor-js-image/issues"
+  },
+  "homepage": "https://github.com/gwsmedika/editor-js-image#readme"
 }
